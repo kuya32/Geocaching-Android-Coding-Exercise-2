@@ -1,4 +1,4 @@
-package com.github.kuya32.geocachingandroidcodingexercise2.ui.theme
+package com.github.kuya32.geocachingandroidcodingexercise2.presentation.ui.theme
 
 import androidx.compose.material.Typography
 import androidx.compose.ui.text.TextStyle
