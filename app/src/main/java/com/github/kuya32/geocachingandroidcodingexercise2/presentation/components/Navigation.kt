@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.ScaffoldState
 import androidx.compose.runtime.Composable
@@ -13,15 +14,19 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.Navigation
 import androidx.navigation.compose.*
+import com.github.kuya32.geocachingandroidcodingexercise2.presentation.map.MapViewScreen
 import com.github.kuya32.geocachingandroidcodingexercise2.presentation.permission.PermissionScreen
 import com.github.kuya32.geocachingandroidcodingexercise2.utils.Screen
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
 
+@ExperimentalAnimationApi
 @ExperimentalPermissionsApi
 @Composable
 fun Navigation(
     navController: NavHostController,
     scaffoldState: ScaffoldState,
+    permission: PermissionState,
     context: Context = LocalContext.current
 ) {
     NavHost(
@@ -39,11 +44,12 @@ fun Navigation(
                             Uri.fromParts("package", "com.github.kuya32.geocachingandroidcodingexercise2", null)
                         )
                     )
-                }
+                },
+                locationPermissionState = permission
             )
         }
-        composable(Screen.MapScreen.route) {
-
+        composable(Screen.MapViewScreen.route) {
+            MapViewScreen()
         }
     }
 }

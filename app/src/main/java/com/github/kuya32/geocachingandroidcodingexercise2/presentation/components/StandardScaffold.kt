@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -17,7 +18,6 @@ import com.github.kuya32.geocachingandroidcodingexercise2.domain.models.TopNavIt
 
 @Composable
 fun StandardScaffold(
-    navController: NavController,
     modifier: Modifier = Modifier,
     showFabButton: Boolean = false,
     state: ScaffoldState,
@@ -34,7 +34,8 @@ fun StandardScaffold(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add, 
-                        contentDescription = stringResource(id = R.string.add_pin__on_location)
+                        contentDescription = stringResource(id = R.string.add_pin__on_location),
+                        tint = MaterialTheme.colors.onBackground
                     )
                 }
             }
