@@ -9,6 +9,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -38,6 +39,8 @@ fun MapViewScreen(
     context: Context = LocalContext.current,
     viewModel: MapViewModel = hiltViewModel()
 ) {
+    viewModel.getDeviceLocation(permissions, context)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -54,61 +57,52 @@ fun MapViewScreen(
                 viewModel.onEventMapView(MapViewEvent.CalculatedDistance)
             }
         )
-        var isMapLoaded by remember { mutableStateOf(false) }
 
         Box(
-            Modifier.fillMaxSize()
+            Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            viewModel.getDeviceLocation(permissions, context)
+            if (viewModel.isUserLocationDetected.value) {
+                val userLocation = viewModel.getUserCurrentCoordinates()
+                println("${userLocation.latitude}HELLO")
+                // Observing and controlling the camera's state can be done with a CameraPositionState
+                val cameraPositionState = rememberCameraPositionState {
+                    position = CameraPosition.fromLatLngZoom(userLocation, 15f)
+                }
 
-            // Observing and controlling the camera's state can be done with a CameraPositionState
-            val cameraPositionState = rememberCameraPositionState()
-
-            val mapProperties by remember {
-                mutableStateOf(
-                    MapProperties(
+                val mapProperties by remember {
+                    mutableStateOf(MapProperties(
                         mapType = MapType.NORMAL,
                         isMyLocationEnabled = true
-                    )
-                )
-            }
-            val uiSettings by remember {
-                mutableStateOf(
-                    MapUiSettings(
-                        compassEnabled = true,
-                        myLocationButtonEnabled = false
-                    )
-                )
-            }
-            val ticker by remember { mutableStateOf(0) }
-
-            GoogleMap(
-                modifier = Modifier.fillMaxSize(),
-                properties = mapProperties,
-                uiSettings = uiSettings,
-                onMapLoaded = {
-                    isMapLoaded = true
+                    ))
                 }
-            ) {
-                LaunchedEffect(key1 = true) {
-                    viewModel.eventFlow.collectLatest { event ->
-                        when (event) {
-                            is UiEvent.NavigateToUserLocation -> {
-                                cameraPositionState.animate(
-                                    CameraUpdateFactory.newCameraPosition(
-                                        CameraPosition.fromLatLngZoom(event.userLocation, 16.5f)
-                                    )
-                                )
+                val uiSettings by remember { mutableStateOf(MapUiSettings(
+                    compassEnabled = true,
+                    myLocationButtonEnabled = false
+                )) }
+
+                GoogleMap(
+                    modifier = Modifier.fillMaxSize(),
+                    cameraPositionState = cameraPositionState,
+                    properties = mapProperties,
+                    uiSettings = uiSettings
+                ) {
+                    LaunchedEffect(key1 = true) {
+                        viewModel.eventFlow.collectLatest { event ->
+                            when (event) {
+                                is UiEvent.NavigateToUserLocation -> {
+                                    cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(
+                                        CameraPosition.fromLatLngZoom(event.userLocation, 16.5f)))
+                                }
                             }
                         }
                     }
                 }
-                val userLocation =
-                    LatLng(viewModel.userCurrentLat.value, viewModel.userCurrentLng.value)
-                if (isMapLoaded) {
-                    cameraPositionState.position =
-                        CameraPosition.fromLatLngZoom(userLocation, 16.5f)
-                }
+            } else {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(80.dp),
+                    color = MaterialTheme.colors.onBackground
+                )
             }
         }
     }

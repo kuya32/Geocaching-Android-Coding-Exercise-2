@@ -39,6 +39,8 @@ class MapViewModel @Inject constructor(
 
     private lateinit var locationCallback: LocationCallback
 
+    var isUserLocationDetected = mutableStateOf(false)
+
     private var _userCurrentLat = mutableStateOf(0.0)
     var userCurrentLat: MutableState<Double> = _userCurrentLat
 
@@ -51,6 +53,10 @@ class MapViewModel @Inject constructor(
     private fun setUserCurrentCoordinates(latLng: LatLng) {
         _userCurrentLat.value = latLng.latitude
         _userCurrentLng.value = latLng.longitude
+    }
+
+    fun getUserCurrentCoordinates(): LatLng {
+        return LatLng(_userCurrentLat.value, _userCurrentLng.value)
     }
 
     fun onEventMapView(event: MapViewEvent) {
@@ -106,6 +112,7 @@ class MapViewModel @Inject constructor(
                             setUserCurrentCoordinates(
                                 LatLng(lastKnownLocation.latitude, lastKnownLocation.longitude)
                             )
+                            isUserLocationDetected.value = true
                         }
                     } else {
                         Log.d("User Location", "Current user location null")
