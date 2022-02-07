@@ -1,4 +1,4 @@
-package com.github.kuya32.geocachingandroidcodingexercise2
+package com.github.kuya32.geocachingandroidcodingexercise2.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
