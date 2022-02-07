@@ -14,6 +14,8 @@ import androidx.compose.material.*
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.github.kuya32.geocachingandroidcodingexercise2.presentation.components.StandardScaffold
+import com.github.kuya32.geocachingandroidcodingexercise2.presentation.map.MapViewEvent
+import com.github.kuya32.geocachingandroidcodingexercise2.presentation.map.MapViewModel
 import com.github.kuya32.geocachingandroidcodingexercise2.presentation.ui.theme.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -24,13 +26,14 @@ import dagger.hilt.android.AndroidEntryPoint
 @ExperimentalPermissionsApi
 class MainActivity : ComponentActivity() {
 
-    private val viewModel: MainViewModel by viewModels()
+    private val mainViewModel: MainViewModel by viewModels()
+    private val mapViewModel: MapViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         installSplashScreen().apply {
             setKeepOnScreenCondition() {
-                viewModel.isLoading.value
+                mainViewModel.isLoading.value
             }
         }
         setContent {
@@ -50,6 +53,9 @@ class MainActivity : ComponentActivity() {
                         state = scaffoldState,
                         modifier = Modifier.fillMaxSize(),
                         showFabButton = locationPermissionsState.allPermissionsGranted,
+                        onFabClick = {
+                            mapViewModel.onEventMapView(MapViewEvent.PinRemoveCurrentLocation)
+                        }
                     ) {
                         AppScreen(
                             navigateToSettingsScreen = {

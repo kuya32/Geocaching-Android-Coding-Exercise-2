@@ -1,28 +1,18 @@
 package com.github.kuya32.geocachingandroidcodingexercise2.presentation.map
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Looper
-import android.provider.Settings
 import android.util.Log
-import android.webkit.PermissionRequest
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.kuya32.geocachingandroidcodingexercise2.domain.models.Latitude
-import com.github.kuya32.geocachingandroidcodingexercise2.domain.models.Longitude
-import com.github.kuya32.geocachingandroidcodingexercise2.presentation.permission.PermissionEvent
 import com.github.kuya32.geocachingandroidcodingexercise2.presentation.util.UiEvent
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
-import com.google.accompanist.permissions.PermissionState
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -41,11 +31,21 @@ class MapViewModel @Inject constructor(
 
     var isUserLocationDetected = mutableStateOf(false)
 
+    var isTherePinnedLocation = mutableStateOf(false)
+
+    var pinnedButtonPressed = mutableStateOf(false)
+
     private var _userCurrentLat = mutableStateOf(0.0)
     var userCurrentLat: MutableState<Double> = _userCurrentLat
 
     private var _userCurrentLng = mutableStateOf(0.0)
-    var userCurrentLng: State<Double> = _userCurrentLng
+    var userCurrentLng: MutableState<Double> = _userCurrentLng
+
+    private var _pinLat = mutableStateOf(0.0)
+    var pinLat: MutableState<Double> = _pinLat
+
+    private var _pinLng = mutableStateOf(0.0)
+    var pinLng: MutableState<Double> = _pinLng
 
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
@@ -59,18 +59,43 @@ class MapViewModel @Inject constructor(
         return LatLng(_userCurrentLat.value, _userCurrentLng.value)
     }
 
+    fun setPinCoordinates(latLng: LatLng) {
+        _pinLat.value = latLng.latitude
+        _pinLng.value = latLng.longitude
+    }
+
+    fun getPinCoordinates(): LatLng {
+        return LatLng(_pinLat.value, _pinLng.value)
+    }
+
     fun onEventMapView(event: MapViewEvent) {
         when (event) {
-            is MapViewEvent.PinCurrentLocation -> {
-
+            is MapViewEvent.PinRemoveCurrentLocation -> {
+                viewModelScope.launch {
+                    if (isTherePinnedLocation.value) {
+                        _eventFlow.emit(
+                            UiEvent.UpdatePinnedLocation(LatLng(userCurrentLat.value, userCurrentLng.value))
+                        )
+                    } else {
+                        println("HELLO")
+                        _eventFlow.emit(
+//                            UiEvent.PinCurrentUserLocation(LatLng(userCurrentLat.value, userCurrentLng.value))
+                            UiEvent.PinCurrentUserLocation(LatLng(47.7086, -122.3232))
+                        )
+                    }
+                }
             }
-            is MapViewEvent.NavigatePinnedLocation -> {
-
-            }
-            is MapViewEvent.NavigateUserLocation -> {
+            is MapViewEvent.ZoomPinnedLocation -> {
                 viewModelScope.launch {
                     _eventFlow.emit(
-                        UiEvent.NavigateToUserLocation(LatLng(_userCurrentLat.value, userCurrentLng.value))
+                        UiEvent.ZoomToUserLocation(getPinCoordinates())
+                    )
+                }
+            }
+            is MapViewEvent.ZoomUserLocation -> {
+                viewModelScope.launch {
+                    _eventFlow.emit(
+                        UiEvent.ZoomToUserLocation(LatLng(userCurrentLat.value, userCurrentLng.value))
                     )
                 }
             }

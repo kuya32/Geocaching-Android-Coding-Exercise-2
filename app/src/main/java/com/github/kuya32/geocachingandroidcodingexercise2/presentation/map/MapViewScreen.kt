@@ -1,33 +1,22 @@
 package com.github.kuya32.geocachingandroidcodingexercise2.presentation.map
 
-import android.content.ContentValues.TAG
 import android.content.Context
-import android.util.Log
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.github.kuya32.geocachingandroidcodingexercise2.R
 import com.github.kuya32.geocachingandroidcodingexercise2.presentation.components.MapViewToolbar
 import com.github.kuya32.geocachingandroidcodingexercise2.presentation.util.UiEvent
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
-import com.google.accompanist.permissions.PermissionState
-import com.google.android.gms.maps.CameraUpdate
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMapOptions
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.*
 import kotlinx.coroutines.flow.collectLatest
 
@@ -48,10 +37,10 @@ fun MapViewScreen(
         MapViewToolbar(
             modifier = Modifier.fillMaxWidth(),
             onNavigateToPinClick = {
-                viewModel.onEventMapView(MapViewEvent.NavigatePinnedLocation)
+                viewModel.onEventMapView(MapViewEvent.ZoomPinnedLocation)
             },
             onNavigateToUserClick = {
-                viewModel.onEventMapView(MapViewEvent.NavigateUserLocation)
+                viewModel.onEventMapView(MapViewEvent.ZoomUserLocation)
             },
             onCalculateDistanceClick = {
                 viewModel.onEventMapView(MapViewEvent.CalculatedDistance)
@@ -64,8 +53,7 @@ fun MapViewScreen(
         ) {
             if (viewModel.isUserLocationDetected.value) {
                 val userLocation = viewModel.getUserCurrentCoordinates()
-                println("${userLocation.latitude}HELLO")
-                // Observing and controlling the camera's state can be done with a CameraPositionState
+
                 val cameraPositionState = rememberCameraPositionState {
                     position = CameraPosition.fromLatLngZoom(userLocation, 15f)
                 }
@@ -80,22 +68,37 @@ fun MapViewScreen(
                     compassEnabled = true,
                     myLocationButtonEnabled = false
                 )) }
-
+                
                 GoogleMap(
                     modifier = Modifier.fillMaxSize(),
                     cameraPositionState = cameraPositionState,
                     properties = mapProperties,
-                    uiSettings = uiSettings
+                    uiSettings = uiSettings,
+
                 ) {
                     LaunchedEffect(key1 = true) {
                         viewModel.eventFlow.collectLatest { event ->
                             when (event) {
-                                is UiEvent.NavigateToUserLocation -> {
+                                is UiEvent.PinCurrentUserLocation -> {
+                                    viewModel.pinnedButtonPressed.value = true
+                                    viewModel.setPinCoordinates(event.pinnedLocation)
+                                    viewModel.isTherePinnedLocation.value = true
+                                }
+                                is UiEvent.ZoomToPinLocation -> {
+                                    cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(
+                                        CameraPosition.fromLatLngZoom(event.pinLocation, 16.5f)))
+                                }
+                                is UiEvent.ZoomToUserLocation -> {
                                     cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(
                                         CameraPosition.fromLatLngZoom(event.userLocation, 16.5f)))
                                 }
                             }
                         }
+                    }
+                    if (viewModel.pinnedButtonPressed.value) {
+                        Marker(position = viewModel.getPinCoordinates())
+                    } else if (viewModel.pinnedButtonPressed.value && viewModel.isTherePinnedLocation.value) {
+                        Marker(position = LatLng(viewModel.userCurrentLat.value, viewModel.userCurrentLng.value))
                     }
                 }
             } else {
