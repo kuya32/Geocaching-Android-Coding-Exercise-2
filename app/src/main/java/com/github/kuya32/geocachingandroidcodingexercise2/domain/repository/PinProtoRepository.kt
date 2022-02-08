@@ -1,4 +1,4 @@
-package com.github.kuya32.geocachingandroidcodingexercise2.domain
+package com.github.kuya32.geocachingandroidcodingexercise2.domain.repository
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -10,5 +10,4 @@ import kotlinx.coroutines.flow.Flow
 interface PinProtoRepository {
     suspend fun updatePinnedLocation(pin: LatLng)
     suspend fun getPinnedLocation(): Pin
-    suspend fun deletePinnedLocation()
 }

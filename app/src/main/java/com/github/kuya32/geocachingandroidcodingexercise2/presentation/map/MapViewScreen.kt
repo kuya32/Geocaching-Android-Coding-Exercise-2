@@ -36,9 +36,6 @@ fun MapViewScreen(
     ) {
         MapViewToolbar(
             modifier = Modifier.fillMaxWidth(),
-            onNavigateToPinClick = {
-                viewModel.onEventMapView(MapViewEvent.ZoomPinnedLocation)
-            },
             onNavigateToUserClick = {
                 viewModel.onEventMapView(MapViewEvent.ZoomUserLocation)
             }
@@ -49,23 +46,28 @@ fun MapViewScreen(
             contentAlignment = Alignment.Center
         ) {
             if (viewModel.isUserLocationDetected.value) {
-                val userLocation = viewModel.getUserCurrentCoordinates()
 
                 val cameraPositionState = rememberCameraPositionState {
-                    position = CameraPosition.fromLatLngZoom(userLocation, 15f)
+                    position =
+                        CameraPosition.fromLatLngZoom(viewModel.getUserCurrentCoordinates(), 15f)
                 }
 
                 val mapProperties by remember {
-                    mutableStateOf(MapProperties(
-                        mapType = MapType.NORMAL,
-                        isMyLocationEnabled = true
-                    ))
+                    mutableStateOf(
+                        MapProperties(
+                            mapType = MapType.NORMAL,
+                            isMyLocationEnabled = true
+                        )
+                    )
                 }
-                val uiSettings by remember { mutableStateOf(MapUiSettings(
-                    compassEnabled = true,
-                    myLocationButtonEnabled = false
-                )) }
-                
+                val uiSettings by remember {
+                    mutableStateOf(
+                        MapUiSettings(
+                            myLocationButtonEnabled = false
+                        )
+                    )
+                }
+
                 GoogleMap(
                     modifier = Modifier.fillMaxSize(),
                     cameraPositionState = cameraPositionState,
@@ -79,14 +81,14 @@ fun MapViewScreen(
                                 is UiEvent.PinCurrentUserLocation -> {
                                     viewModel.setPinCoordinates(event.pinnedLocation)
                                 }
-                                is UiEvent.ZoomToPinLocation -> {
-                                    cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(
-                                        CameraPosition.fromLatLngZoom(event.pinLocation, 16.5f)))
-                                }
                                 is UiEvent.ZoomToUserLocation -> {
-                                    cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(
-                                        CameraPosition.fromLatLngZoom(event.userLocation, 16.5f)))
+                                    cameraPositionState.animate(
+                                        CameraUpdateFactory.newCameraPosition(
+                                            CameraPosition.fromLatLngZoom(event.userLocation, 16.5f)
+                                        )
+                                    )
                                 }
+                                else -> {}
                             }
                         }
                     }

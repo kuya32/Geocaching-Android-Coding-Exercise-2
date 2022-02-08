@@ -12,7 +12,6 @@ import com.github.kuya32.geocachingandroidcodingexercise2.R
 @Composable
 fun MapViewToolbar(
     modifier: Modifier,
-    onNavigateToPinClick: () -> Unit,
     onNavigateToUserClick: () -> Unit
 ) {
     TopAppBar(
@@ -21,14 +20,6 @@ fun MapViewToolbar(
         },
         modifier = modifier,
         actions = {
-            IconButton(
-                onClick = { onNavigateToPinClick() }
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_pinned_location),
-                    contentDescription = "Navigate to pinned location"
-                )
-            }
             IconButton(
                 onClick = { onNavigateToUserClick() }
             ) {

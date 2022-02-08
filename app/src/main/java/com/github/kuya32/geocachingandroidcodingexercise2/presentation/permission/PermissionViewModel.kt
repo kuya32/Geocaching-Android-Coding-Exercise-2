@@ -14,7 +14,7 @@ import javax.inject.Inject
 @HiltViewModel
 class PermissionViewModel @Inject constructor(
 
-): ViewModel() {
+) : ViewModel() {
 
     private val _doNotShowRationale = mutableStateOf(false)
     val doNotShowRationale: State<Boolean> = _doNotShowRationale

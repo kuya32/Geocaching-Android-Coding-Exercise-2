@@ -18,7 +18,7 @@ fun StandardScaffold(
     state: ScaffoldState,
     onFabClick: () -> Unit = {},
     content: @Composable () -> Unit
-    ) {
+) {
     Scaffold(
         scaffoldState = state,
         floatingActionButton = {
@@ -28,7 +28,7 @@ fun StandardScaffold(
                     backgroundColor = MaterialTheme.colors.primary,
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Add, 
+                        imageVector = Icons.Default.Add,
                         contentDescription = stringResource(id = R.string.add_pin__on_location),
                         tint = MaterialTheme.colors.onBackground
                     )

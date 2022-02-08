@@ -37,9 +37,8 @@ fun RationaleDialog(
                 .padding(SpaceXXLarge)
                 .clip(RoundedCornerShape(10))
                 .background(color = colorResource(id = R.color.white)),
-            horizontalAlignment = Alignment.CenterHorizontally,
-
-            ) {
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Image(
                 painter = painterResource(id = R.drawable.ic_map),
                 contentDescription = "Map Icon",
@@ -61,7 +60,7 @@ fun RationaleDialog(
             )
             Spacer(modifier = Modifier.height(SpaceSmall))
             Text(
-                text =  "We'll just need your permission.",
+                text = "We'll just need your permission.",
                 fontSize = 18.sp,
                 color = colorResource(id = R.color.green),
                 modifier = Modifier
@@ -140,7 +139,7 @@ fun SettingsDialog(
             )
             Spacer(modifier = Modifier.height(SpaceSmall))
             Text(
-                text =  "Please, grant us access in the application settings.",
+                text = "Please, grant us access in the application settings.",
                 textAlign = TextAlign.Center,
                 fontSize = 18.sp,
                 color = colorResource(id = R.color.green),

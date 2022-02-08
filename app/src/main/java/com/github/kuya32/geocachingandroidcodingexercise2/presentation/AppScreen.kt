@@ -45,20 +45,26 @@ fun AppScreen(
     LaunchedEffect(key1 = true) {
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
+                // Launches request for location permission
                 is UiEvent.LaunchPermissions -> {
                     if (event.permissionLaunched) {
                         permissions.launchMultiplePermissionRequest()
                     }
                 }
+                // Navigates to application settings to change location permission
                 is UiEvent.NavigateSettings -> {
                     if (event.settingsLaunched) {
                         navigateToSettingsScreen()
                     }
                 }
+                else -> {}
             }
         }
     }
 
+    /* Granted permission sends the user to the map view while denied permission will prompt the
+    user the need for location permission for the application to work. Used the Accompanist
+    permissions API. Link: https://google.github.io/accompanist/permissions/ */
     when {
         permissions.allPermissionsGranted -> {
             MapViewScreen(permissions)

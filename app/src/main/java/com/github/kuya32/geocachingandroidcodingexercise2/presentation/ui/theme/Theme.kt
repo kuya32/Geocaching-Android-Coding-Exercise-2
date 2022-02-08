@@ -14,7 +14,6 @@ private val DarkColorPalette = darkColors(
 
 @Composable
 fun GeocachingAndroidCodingExercise2Theme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
 

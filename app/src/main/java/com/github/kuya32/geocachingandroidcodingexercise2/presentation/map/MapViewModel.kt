@@ -10,8 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.kuya32.geocachingandroidcodingexercise2.Pin
-import com.github.kuya32.geocachingandroidcodingexercise2.domain.PinProtoRepositoryImpl
+import com.github.kuya32.geocachingandroidcodingexercise2.data.repository.PinProtoRepositoryImpl
 import com.github.kuya32.geocachingandroidcodingexercise2.presentation.util.UiEvent
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
@@ -21,7 +20,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -29,7 +27,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val pinProtoRepositoryImpl: PinProtoRepositoryImpl
-): ViewModel() {
+) : ViewModel() {
 
     private lateinit var locationCallback: LocationCallback
 
@@ -68,47 +66,56 @@ class MapViewModel @Inject constructor(
         return LatLng(_pinLat.value, _pinLng.value)
     }
 
+    // Checks DataStore if there is a saved pinned location and sets data to pin coordinates states
     fun checkAndSetPinCoordinates(): LatLng {
         viewModelScope.launch(Dispatchers.IO) {
-            val lat = pinProtoRepositoryImpl.getPinnedLocation().latitude
-            val lng = pinProtoRepositoryImpl.getPinnedLocation().longitude
-            println("$lat : $lng")
-            if (lat != 0.0 && lng != 0.0) {
-                _pinLat.value = lat
-                _pinLng.value = lng
+            val pin = pinProtoRepositoryImpl.getPinnedLocation()
+            if (pin.latitude != 0.0 && pin.longitude != 0.0) {
+                _pinLat.value = pin.latitude
+                _pinLng.value = pin.longitude
             }
         }
         return LatLng(_pinLat.value, _pinLng.value)
     }
 
+
     fun onEventMapView(event: MapViewEvent) {
         when (event) {
             is MapViewEvent.PinUserLocation -> {
                 viewModelScope.launch {
-                    // Saves pinned location to Proto Datastore so that we can mark the map with pinned location even after the app is closed
-                    pinProtoRepositoryImpl.updatePinnedLocation(LatLng(userCurrentLat.value, userCurrentLng.value))
-                    _eventFlow.emit(
-                        UiEvent.PinCurrentUserLocation(LatLng(userCurrentLat.value, userCurrentLng.value))
+                    // Saves pinned location to Datastore so that we can mark the map with pinned location even after the app is closed
+                    pinProtoRepositoryImpl.updatePinnedLocation(
+                        LatLng(
+                            userCurrentLat.value,
+                            userCurrentLng.value
+                        )
                     )
-                }
-            }
-            is MapViewEvent.ZoomPinnedLocation -> {
-                viewModelScope.launch {
                     _eventFlow.emit(
-                        UiEvent.ZoomToUserLocation(getPinCoordinates())
+                        UiEvent.PinCurrentUserLocation(
+                            LatLng(
+                                userCurrentLat.value,
+                                userCurrentLng.value
+                            )
+                        )
                     )
                 }
             }
             is MapViewEvent.ZoomUserLocation -> {
                 viewModelScope.launch {
                     _eventFlow.emit(
-                        UiEvent.ZoomToUserLocation(LatLng(userCurrentLat.value, userCurrentLng.value))
+                        UiEvent.ZoomToUserLocation(
+                            LatLng(
+                                userCurrentLat.value,
+                                userCurrentLng.value
+                            )
+                        )
                     )
                 }
             }
         }
     }
 
+    // Locates the user's current location
     fun getDeviceLocation(
         permissions: MultiplePermissionsState,
         context: Context
@@ -153,6 +160,7 @@ class MapViewModel @Inject constructor(
         }
     }
 
+    // Gets periodical updates of user location
     private fun startLocationUpdates(
         fusedLocationProviderClient: FusedLocationProviderClient,
         permissions: MultiplePermissionsState,
