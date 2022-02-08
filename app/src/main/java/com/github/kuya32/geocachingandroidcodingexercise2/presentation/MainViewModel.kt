@@ -1,4 +1,4 @@
-package com.github.kuya32.geocachingandroidcodingexercise2
+package com.github.kuya32.geocachingandroidcodingexercise2.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,7 +12,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
 
-): ViewModel()   {
+) : ViewModel() {
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 

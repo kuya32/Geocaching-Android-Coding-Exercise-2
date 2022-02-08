@@ -1,122 +1,108 @@
 package com.github.kuya32.geocachingandroidcodingexercise2.presentation.map
 
-import android.content.ContentValues.TAG
 import android.content.Context
-import android.util.Log
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.android.gms.maps.GoogleMapOptions
+import com.github.kuya32.geocachingandroidcodingexercise2.presentation.components.MapViewToolbar
+import com.github.kuya32.geocachingandroidcodingexercise2.presentation.util.UiEvent
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.MultiplePermissionsState
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
+import kotlinx.coroutines.flow.collectLatest
 
+@ExperimentalPermissionsApi
 @ExperimentalAnimationApi
 @Composable
 fun MapViewScreen(
+    permissions: MultiplePermissionsState,
     context: Context = LocalContext.current,
     viewModel: MapViewModel = hiltViewModel()
 ) {
+    viewModel.getDeviceLocation(permissions, context)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
     ) {
-        TopAppBar(
-            title = {
-                Text(text = "Geocaching")
-            },
-            modifier = Modifier
-                .fillMaxWidth(),
-            actions = {
-                IconButton(
-                    onClick = { /*TODO*/ }
-                ) {
-//                    Icon(
-//                        imageVector = ,
-//                        contentDescription =
-//                    )
-                }
-                IconButton(
-                    onClick = { /*TODO*/ }
-                ) {
-//                    Icon(
-//                        imageVector = ,
-//                        contentDescription =
-//                    )
-                }
-                IconButton(
-                    onClick = { /*TODO*/ }
-                ) {
-//                    Icon(
-//                        imageVector = ,
-//                        contentDescription =
-//                    )
-                }
-            },
-            elevation = 8.dp,
-            backgroundColor = MaterialTheme.colors.background,
-            contentColor = MaterialTheme.colors.onBackground
-        )
-        var isMapLoaded by remember { mutableStateOf(false) }
-
-        Box(Modifier.fillMaxSize()) {
-            GoogleMapView(
-                modifier = Modifier.matchParentSize(),
-                onMapLoaded = {
-                    isMapLoaded = true
-                }
-            )
-        }
-    }
-}
-
-@Composable
-private fun GoogleMapView(modifier: Modifier, onMapLoaded: () -> Unit) {
-    val singapore = LatLng(1.35, 103.87)
-    // Observing and controlling the camera's state can be done with a CameraPositionState
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(singapore, 11f)
-    }
-
-    var mapProperties by remember {
-        mutableStateOf(MapProperties(mapType = MapType.NORMAL))
-    }
-    var uiSettings by remember { mutableStateOf(MapUiSettings(compassEnabled = false)) }
-    var ticker by remember { mutableStateOf(0) }
-
-    GoogleMap(
-        modifier = modifier,
-        cameraPositionState = cameraPositionState,
-        properties = mapProperties,
-        uiSettings = uiSettings,
-        onMapLoaded = onMapLoaded,
-        googleMapOptionsFactory = {
-            GoogleMapOptions().camera(CameraPosition.fromLatLngZoom(singapore, 11f))
-        },
-        onPOIClick = {
-            Log.d(TAG, "POI clicked: ${it.name}")
-        }
-    ) {
-        // Drawing on the map is accomplished with a child-based API
-        Marker(
-            position = singapore,
-            title = "Zoom in has been tapped $ticker times.",
-            onClick = {
-                println("${it.title} was clicked")
-                false
+        MapViewToolbar(
+            modifier = Modifier.fillMaxWidth(),
+            onNavigateToUserClick = {
+                viewModel.onEventMapView(MapViewEvent.ZoomUserLocation)
             }
         )
-        Circle(
-            center = singapore,
-            fillColor = MaterialTheme.colors.secondary,
-            strokeColor = MaterialTheme.colors.secondaryVariant,
-            radius = 1000.0,
-        )
+
+        Box(
+            Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            if (viewModel.isUserLocationDetected.value) {
+
+                val cameraPositionState = rememberCameraPositionState {
+                    position =
+                        CameraPosition.fromLatLngZoom(viewModel.getUserCurrentCoordinates(), 15f)
+                }
+
+                val mapProperties by remember {
+                    mutableStateOf(
+                        MapProperties(
+                            mapType = MapType.NORMAL,
+                            isMyLocationEnabled = true
+                        )
+                    )
+                }
+                val uiSettings by remember {
+                    mutableStateOf(
+                        MapUiSettings(
+                            myLocationButtonEnabled = false
+                        )
+                    )
+                }
+
+                GoogleMap(
+                    modifier = Modifier.fillMaxSize(),
+                    cameraPositionState = cameraPositionState,
+                    properties = mapProperties,
+                    uiSettings = uiSettings
+
+                ) {
+                    LaunchedEffect(key1 = true) {
+                        viewModel.eventFlow.collectLatest { event ->
+                            when (event) {
+                                is UiEvent.PinCurrentUserLocation -> {
+                                    viewModel.setPinCoordinates(event.pinnedLocation)
+                                }
+                                is UiEvent.ZoomToUserLocation -> {
+                                    cameraPositionState.animate(
+                                        CameraUpdateFactory.newCameraPosition(
+                                            CameraPosition.fromLatLngZoom(event.userLocation, 16.5f)
+                                        )
+                                    )
+                                }
+                                else -> {}
+                            }
+                        }
+                    }
+                    viewModel.checkAndSetPinCoordinates()
+                    if (viewModel.pinLat.value != 0.0 && viewModel.pinLng.value != 0.0) {
+                        Marker(position = viewModel.getPinCoordinates())
+                    }
+                }
+            } else {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(80.dp),
+                    color = MaterialTheme.colors.onBackground
+                )
+            }
+        }
     }
 }
