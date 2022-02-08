@@ -10,30 +10,30 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.kuya32.geocachingandroidcodingexercise2.Pin
+import com.github.kuya32.geocachingandroidcodingexercise2.domain.PinProtoRepositoryImpl
 import com.github.kuya32.geocachingandroidcodingexercise2.presentation.util.UiEvent
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @ExperimentalPermissionsApi
 @HiltViewModel
 class MapViewModel @Inject constructor(
-
+    private val pinProtoRepositoryImpl: PinProtoRepositoryImpl
 ): ViewModel() {
 
     private lateinit var locationCallback: LocationCallback
 
     var isUserLocationDetected = mutableStateOf(false)
-
-    var isTherePinnedLocation = mutableStateOf(false)
-
-    var pinnedButtonPressed = mutableStateOf(false)
 
     private var _userCurrentLat = mutableStateOf(0.0)
     var userCurrentLat: MutableState<Double> = _userCurrentLat
@@ -68,21 +68,28 @@ class MapViewModel @Inject constructor(
         return LatLng(_pinLat.value, _pinLng.value)
     }
 
+    fun checkAndSetPinCoordinates(): LatLng {
+        viewModelScope.launch(Dispatchers.IO) {
+            val lat = pinProtoRepositoryImpl.getPinnedLocation().latitude
+            val lng = pinProtoRepositoryImpl.getPinnedLocation().longitude
+            println("$lat : $lng")
+            if (lat != 0.0 && lng != 0.0) {
+                _pinLat.value = lat
+                _pinLng.value = lng
+            }
+        }
+        return LatLng(_pinLat.value, _pinLng.value)
+    }
+
     fun onEventMapView(event: MapViewEvent) {
         when (event) {
-            is MapViewEvent.PinRemoveCurrentLocation -> {
+            is MapViewEvent.PinUserLocation -> {
                 viewModelScope.launch {
-                    if (isTherePinnedLocation.value) {
-                        _eventFlow.emit(
-                            UiEvent.UpdatePinnedLocation(LatLng(userCurrentLat.value, userCurrentLng.value))
-                        )
-                    } else {
-                        println("HELLO")
-                        _eventFlow.emit(
-//                            UiEvent.PinCurrentUserLocation(LatLng(userCurrentLat.value, userCurrentLng.value))
-                            UiEvent.PinCurrentUserLocation(LatLng(47.7086, -122.3232))
-                        )
-                    }
+                    // Saves pinned location to Proto Datastore so that we can mark the map with pinned location even after the app is closed
+                    pinProtoRepositoryImpl.updatePinnedLocation(LatLng(userCurrentLat.value, userCurrentLng.value))
+                    _eventFlow.emit(
+                        UiEvent.PinCurrentUserLocation(LatLng(userCurrentLat.value, userCurrentLng.value))
+                    )
                 }
             }
             is MapViewEvent.ZoomPinnedLocation -> {
@@ -98,9 +105,6 @@ class MapViewModel @Inject constructor(
                         UiEvent.ZoomToUserLocation(LatLng(userCurrentLat.value, userCurrentLng.value))
                     )
                 }
-            }
-            is MapViewEvent.CalculatedDistance -> {
-
             }
         }
     }

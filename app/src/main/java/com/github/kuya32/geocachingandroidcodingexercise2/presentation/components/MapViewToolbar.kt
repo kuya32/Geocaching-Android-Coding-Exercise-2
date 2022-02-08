@@ -13,8 +13,7 @@ import com.github.kuya32.geocachingandroidcodingexercise2.R
 fun MapViewToolbar(
     modifier: Modifier,
     onNavigateToPinClick: () -> Unit,
-    onNavigateToUserClick: () -> Unit,
-    onCalculateDistanceClick: () -> Unit
+    onNavigateToUserClick: () -> Unit
 ) {
     TopAppBar(
         title = {
@@ -36,14 +35,6 @@ fun MapViewToolbar(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_my_location),
                     contentDescription = "Navigate to location button"
-                )
-            }
-            IconButton(
-                onClick = { onCalculateDistanceClick() }
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_calculate),
-                    contentDescription = "Calculated distance"
                 )
             }
         },

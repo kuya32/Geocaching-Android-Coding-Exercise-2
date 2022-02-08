@@ -41,9 +41,6 @@ fun MapViewScreen(
             },
             onNavigateToUserClick = {
                 viewModel.onEventMapView(MapViewEvent.ZoomUserLocation)
-            },
-            onCalculateDistanceClick = {
-                viewModel.onEventMapView(MapViewEvent.CalculatedDistance)
             }
         )
 
@@ -73,16 +70,14 @@ fun MapViewScreen(
                     modifier = Modifier.fillMaxSize(),
                     cameraPositionState = cameraPositionState,
                     properties = mapProperties,
-                    uiSettings = uiSettings,
+                    uiSettings = uiSettings
 
                 ) {
                     LaunchedEffect(key1 = true) {
                         viewModel.eventFlow.collectLatest { event ->
                             when (event) {
                                 is UiEvent.PinCurrentUserLocation -> {
-                                    viewModel.pinnedButtonPressed.value = true
                                     viewModel.setPinCoordinates(event.pinnedLocation)
-                                    viewModel.isTherePinnedLocation.value = true
                                 }
                                 is UiEvent.ZoomToPinLocation -> {
                                     cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(
@@ -95,10 +90,9 @@ fun MapViewScreen(
                             }
                         }
                     }
-                    if (viewModel.pinnedButtonPressed.value) {
+                    viewModel.checkAndSetPinCoordinates()
+                    if (viewModel.pinLat.value != 0.0 && viewModel.pinLng.value != 0.0) {
                         Marker(position = viewModel.getPinCoordinates())
-                    } else if (viewModel.pinnedButtonPressed.value && viewModel.isTherePinnedLocation.value) {
-                        Marker(position = LatLng(viewModel.userCurrentLat.value, viewModel.userCurrentLng.value))
                     }
                 }
             } else {

@@ -1,6 +1,7 @@
 package com.github.kuya32.geocachingandroidcodingexercise2.presentation
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -13,10 +14,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.datastore.core.DataStore
+import androidx.datastore.dataStore
+import com.github.kuya32.geocachingandroidcodingexercise2.Pin
+import com.github.kuya32.geocachingandroidcodingexercise2.domain.PinSerializer
 import com.github.kuya32.geocachingandroidcodingexercise2.presentation.components.StandardScaffold
 import com.github.kuya32.geocachingandroidcodingexercise2.presentation.map.MapViewEvent
 import com.github.kuya32.geocachingandroidcodingexercise2.presentation.map.MapViewModel
 import com.github.kuya32.geocachingandroidcodingexercise2.presentation.ui.theme.*
+import com.github.kuya32.geocachingandroidcodingexercise2.presentation.util.Constants
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import dagger.hilt.android.AndroidEntryPoint
@@ -54,7 +60,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         showFabButton = locationPermissionsState.allPermissionsGranted,
                         onFabClick = {
-                            mapViewModel.onEventMapView(MapViewEvent.PinRemoveCurrentLocation)
+                            mapViewModel.onEventMapView(MapViewEvent.PinUserLocation)
                         }
                     ) {
                         AppScreen(
