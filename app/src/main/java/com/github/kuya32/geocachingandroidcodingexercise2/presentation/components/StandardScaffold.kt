@@ -11,6 +11,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.github.kuya32.geocachingandroidcodingexercise2.R
 
+/* Used a custom scaffold to have the ability to implement multiple features such as using ScaffoldState
+to implement snack bar notifications (which I didn't end up implementing) and onFabClick to handle the event
+of the user pinning their location.
+*/
+
 @Composable
 fun StandardScaffold(
     modifier: Modifier = Modifier,

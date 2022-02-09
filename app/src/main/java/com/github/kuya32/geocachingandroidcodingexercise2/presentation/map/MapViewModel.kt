@@ -3,11 +3,14 @@ package com.github.kuya32.geocachingandroidcodingexercise2.presentation.map
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.os.Looper
 import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.kuya32.geocachingandroidcodingexercise2.data.repository.PinProtoRepositoryImpl
@@ -15,14 +18,19 @@ import com.github.kuya32.geocachingandroidcodingexercise2.presentation.util.UiEv
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
 import com.google.android.gms.location.*
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+
+/* The MapViewModel consists of variables and methods that handle all the business logic and
+states associated with the Google map view.
+*/
 @ExperimentalPermissionsApi
 @HiltViewModel
 class MapViewModel @Inject constructor(
@@ -66,24 +74,15 @@ class MapViewModel @Inject constructor(
         return LatLng(_pinLat.value, _pinLng.value)
     }
 
-    // Checks DataStore if there is a saved pinned location and sets data to pin coordinates states
-    fun checkAndSetPinCoordinates(): LatLng {
-        viewModelScope.launch(Dispatchers.IO) {
-            val pin = pinProtoRepositoryImpl.getPinnedLocation()
-            if (pin.latitude != 0.0 && pin.longitude != 0.0) {
-                _pinLat.value = pin.latitude
-                _pinLng.value = pin.longitude
-            }
-        }
-        return LatLng(_pinLat.value, _pinLng.value)
-    }
-
-
     fun onEventMapView(event: MapViewEvent) {
         when (event) {
+            /* Event is triggered when user clicks the fab button, which then updates the pin
+            location saved in the DataStore so that we can mark the map with pinned location even
+            after the app is closed. This event also emits the user's location to be used to update
+            the pin's location.
+             */
             is MapViewEvent.PinUserLocation -> {
                 viewModelScope.launch {
-                    // Saves pinned location to Datastore so that we can mark the map with pinned location even after the app is closed
                     pinProtoRepositoryImpl.updatePinnedLocation(
                         LatLng(
                             userCurrentLat.value,
@@ -100,6 +99,9 @@ class MapViewModel @Inject constructor(
                     )
                 }
             }
+            /* Event is triggered when user clicks the zoom button within the toolbar, which then
+            emits the user's location to update the camera view of the map to focus on said location.
+             */
             is MapViewEvent.ZoomUserLocation -> {
                 viewModelScope.launch {
                     _eventFlow.emit(
@@ -112,26 +114,37 @@ class MapViewModel @Inject constructor(
                     )
                 }
             }
+            /* Event is triggered when the Google map view is loaded, which then retrieves the saved
+            pin location in the DataStore. This event also emits pin location to update the current
+            pin location state and place a marker on the map.
+             */
+            is MapViewEvent.PinLoaded -> {
+                viewModelScope.launch {
+                    val pin = pinProtoRepositoryImpl.getPinnedLocation()
+                    if (pin.latitude != 0.0 && pin.longitude != 0.0) {
+                        _eventFlow.emit(
+                            UiEvent.PinSavedLocation(
+                                LatLng(
+                                    pin.latitude,
+                                    pin.longitude
+                                )
+                            )
+                        )
+                    }
+                }
+            }
         }
     }
 
-    // Locates the user's current location
-    fun getDeviceLocation(
+    /* Method uses Google fused location provider API to request the last know location of the
+    user's device. Once the request is successful, the last know location coordinates are used to
+    update the map view with the user's location.
+     */
+    fun initializeDeviceLocation(
         permissions: MultiplePermissionsState,
         context: Context
     ) {
-
-        // Chunk of code is unnecessary since accompanist permission library already checks for location permissions. Included to satisfy error with retrieving fused location client.
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
+        checkSelfPermission(context)
 
         val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
 
@@ -160,24 +173,13 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    // Gets periodical updates of user location
+    // This method requests periodical updates of user location
     private fun startLocationUpdates(
         fusedLocationProviderClient: FusedLocationProviderClient,
         permissions: MultiplePermissionsState,
         context: Context
     ) {
-
-        // Chunk of code is unnecessary since accompanist permission library already checks for location permissions. Included to satisfy error with requesting location updates.
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
+        checkSelfPermission(context)
 
         if (permissions.allPermissionsGranted) {
             val locationRequest = LocationRequest.create().apply {
@@ -204,4 +206,53 @@ class MapViewModel @Inject constructor(
             )
         }
     }
+
+    private fun checkSelfPermission(context: Context): Boolean {
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return false
+        }
+        return true
+    }
+
+    /* Method is used to take a image vector and convert it into a BitmapDescriptor to be used in
+    Google map view.
+     */
+    fun bitmapFromVector(context: Context, vectorResId: Int): BitmapDescriptor? {
+        // below line is use to generate a drawable.
+        val vectorDrawable = ContextCompat.getDrawable(context, vectorResId)
+
+        // below line is use to set bounds to our vector drawable.
+        vectorDrawable!!.setBounds(
+            0,
+            0,
+            vectorDrawable.intrinsicWidth,
+            vectorDrawable.intrinsicHeight
+        )
+
+        // below line is use to create a bitmap for our
+        // drawable which we have added.
+        val bitmap = Bitmap.createBitmap(
+            vectorDrawable.intrinsicWidth,
+            vectorDrawable.intrinsicHeight,
+            Bitmap.Config.ARGB_8888
+        )
+
+        // below line is use to add bitmap in our canvas.
+        val canvas = Canvas(bitmap)
+
+        // below line is use to draw our
+        // vector drawable in canvas.
+        vectorDrawable.draw(canvas)
+
+        // after generating our bitmap we are returning our bitmap.
+        return BitmapDescriptorFactory.fromBitmap(bitmap)
+    }
+
 }
