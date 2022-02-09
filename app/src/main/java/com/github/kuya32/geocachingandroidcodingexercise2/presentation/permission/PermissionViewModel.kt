@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/* The MapViewModel consists of variables and functions that handle all the business logic and
+states associated with the permission view.
+*/
 @HiltViewModel
 class PermissionViewModel @Inject constructor(
 
@@ -28,6 +31,9 @@ class PermissionViewModel @Inject constructor(
 
     fun onEventPermissions(event: PermissionEvent) {
         when (event) {
+            /* Event is triggered when user clicks the "Ok" button, which then emits a boolean to
+            launch location permission request to the user.
+             */
             is PermissionEvent.OkRationale -> {
                 _isPermissionsLaunched.value = true
                 viewModelScope.launch {
@@ -36,9 +42,15 @@ class PermissionViewModel @Inject constructor(
                     )
                 }
             }
+            /* Event is triggered when user clicks the "Nope" text, which then shows SettingDialog
+            composable.
+             */
             is PermissionEvent.NopeRationale -> {
                 _doNotShowRationale.value = true
             }
+            /* Event is triggered when user clicks the "Open Settings" button, which then emits a
+            boolean to launch the application settings.
+             */
             is PermissionEvent.OpenSettings -> {
                 _isSettingsLaunched.value = true
                 viewModelScope.launch {

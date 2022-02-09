@@ -1,6 +1,5 @@
 package com.github.kuya32.geocachingandroidcodingexercise2.presentation.components
 
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -9,6 +8,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.github.kuya32.geocachingandroidcodingexercise2.R
 
+// Toolbar for the map view consisting the navigate to user location button
 @Composable
 fun MapViewToolbar(
     modifier: Modifier,

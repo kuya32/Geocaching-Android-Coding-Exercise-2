@@ -21,6 +21,11 @@ import com.github.kuya32.geocachingandroidcodingexercise2.R
 import com.github.kuya32.geocachingandroidcodingexercise2.presentation.ui.theme.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 
+/* This file consist of the two views presented to the user during the permission phase. The
+RationaleDialog presents the user the reason the application needs to access their location and
+eventually sends out the request. If location permissions are denied, the SettingDialog appears to
+ask the user to change the permissions in the application settings.
+*/
 @ExperimentalPermissionsApi
 @Composable
 fun RationaleDialog(

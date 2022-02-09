@@ -6,13 +6,15 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
 import com.github.kuya32.geocachingandroidcodingexercise2.Pin
-import com.github.kuya32.geocachingandroidcodingexercise2.utils.Constants
 import com.google.protobuf.InvalidProtocolBufferException
 import java.io.InputStream
 import java.io.OutputStream
 
-// Tells DataStore how to read and write the Pin data type
+/* Serializer tells DataStore how to read and write the Pin data type. The pinDataStore variable creates
+an instance of the Pin DataStore.
+*/
 object PinSerializer : Serializer<Pin> {
+    private const val PIN_DATA_STORE_FILE_NAME = "pin_store.pb"
 
     override val defaultValue: Pin = Pin.getDefaultInstance()
 
@@ -27,7 +29,7 @@ object PinSerializer : Serializer<Pin> {
     override suspend fun writeTo(t: Pin, output: OutputStream) = t.writeTo(output)
 
     val Context.pinDataStore: DataStore<Pin> by dataStore(
-        fileName = Constants.PIN_DATA_STORE_FILE_NAME,
+        fileName = PIN_DATA_STORE_FILE_NAME,
         serializer = PinSerializer
     )
 }

@@ -8,10 +8,13 @@
 
 - Android application that uses Google Maps technology to locate user's current location, drop a marker on user's current location, and center camera view to user's current location.
 
-## Google Maps API Key Implementation
+## Setup Instructions
 
-1. Locate string.xml file: app -> res -> values.
-2. Within string.xml file, input your API key within string named "google_maps_api_key".
+1. Download project files:
+   - Google Drive Link: Download project files, unzip files to preferred destination and import into Android Studio.
+   - GitHub: Clone this repository and import into Android Studio.
+2. Locate `string.xml` file by navigating through `app/res/values`.
+3. Within `string.xml` file, input your API key within string named "google_maps_api_key".
 
 ## User Stories
 
